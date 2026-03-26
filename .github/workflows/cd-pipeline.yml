@@ -82,6 +82,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd tugasakhirinkubasi2026/
+            git config --global --add safe.directory "*"
             git pull origin main
             
             # Database Migration Production
@@ -89,7 +90,7 @@ jobs:
             sleep 10
             docker-compose -f docker-compose.prod.yml run --rm server sh -c "npx typeorm migration:run -d dist/data-source.js"
             
-            # Strategi Deployment: Rolling Update
+            # Deployment: Rolling Update
             docker-compose -f docker-compose.prod.yml build
             docker-compose -f docker-compose.prod.yml up -d --no-deps server
             docker-compose -f docker-compose.prod.yml up -d --no-deps client
