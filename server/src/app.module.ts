@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { PrometheusModule, makeCounterProvider, makeHistogramProvider } from '@willsoto/nestjs-prometheus';
+import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ProductsModule } from './products/products.module';
@@ -37,6 +38,20 @@ import { AdminModule } from './admin/admin.module';
     OrdersModule,
     CartModule,
     AdminModule,
+  ],
+  providers: [
+    MetricsInterceptor,
+    makeCounterProvider({
+      name: 'http_requests_total',
+      help: 'Total HTTP requests',
+      labelNames: ['method', 'route', 'status'],
+    }),
+    makeHistogramProvider({
+      name: 'http_request_duration_seconds',
+      help: 'HTTP request duration in seconds',
+      labelNames: ['method', 'route', 'status'],
+      buckets: [0.01, 0.05, 0.1, 0.5, 1, 3, 5],
+    }),
   ],
 })
 export class AppModule {}
