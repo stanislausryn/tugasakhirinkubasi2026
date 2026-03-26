@@ -52,11 +52,11 @@ jobs:
             
             # Deploy Staging
             docker-compose -f docker-compose.prod.yml up -d --build
+            
+            # Health Check dari VPS
+            sleep 15
+            curl -f http://localhost:3000 || exit 1
 
-      - name: Health Check Staging
-        run: |
-          sleep 15
-          curl -f ${{ vars.STAGING_URL }} || exit 1
 
   deploy-production:
     name: Deploy to Production
@@ -85,8 +85,7 @@ jobs:
             docker-compose -f docker-compose.prod.yml build
             docker-compose -f docker-compose.prod.yml up -d --no-deps server
             docker-compose -f docker-compose.prod.yml up -d --no-deps client
-
-      - name: Health Check Production
-        run: |
-          sleep 15
-          curl -f ${{ vars.PROD_URL }} || exit 1
+            
+            # Health Check dari VPS
+            sleep 15
+            curl -f http://localhost:3000 || exit 1
