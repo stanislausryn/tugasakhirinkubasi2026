@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - development
 
 jobs:
   build-and-test:
@@ -29,7 +30,7 @@ jobs:
   deploy-production:
     name: Deploy to Production
     needs: build-and-test
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/development'
     environment: 
       name: production
       url: ${{ vars.PROD_URL }}
