@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CartItem } from './cart-item.entity';
+import { Product } from '../products/product.entity';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Counter } from 'prom-client';
 
@@ -10,6 +11,8 @@ export class CartService {
   constructor(
     @InjectRepository(CartItem)
     private cartRepo: Repository<CartItem>,
+    @InjectRepository(Product)
+    private productRepo: Repository<Product>,
     @InjectMetric('cart_items_added_total')
     private cartCounter: Counter<string>,
   ) {}
@@ -25,13 +28,18 @@ export class CartService {
   }
 
   async addItem(userId: string, productId: string, quantity: number, size?: string, color?: string) {
+    const product = await this.productRepo.findOne({ where: { id: productId } });
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
     let item = await this.cartRepo.findOne({ where: { userId, productId, size, color } });
     if (item) {
       item.quantity += quantity;
       return this.cartRepo.save(item);
     }
     item = this.cartRepo.create({ userId, productId, quantity, size, color });
-    this.cartCounter.inc({ quantity: quantity.toString() });
+    this.cartCounter.inc(quantity);
     return this.cartRepo.save(item);
   }
 

@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CartItem } from './cart-item.entity';
+import { Product } from '../products/product.entity';
 import { CartService } from './cart.service';
 import { CartController } from './cart.controller';
 import { makeCounterProvider } from '@willsoto/nestjs-prometheus';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CartItem])],
+  imports: [TypeOrmModule.forFeature([CartItem, Product])],
   providers: [
     CartService,
     makeCounterProvider({ name: 'cart_items_added_total', help: 'Total cart items added' }),
