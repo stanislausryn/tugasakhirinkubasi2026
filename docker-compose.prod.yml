@@ -35,7 +35,7 @@ services:
     environment:
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_USER=admin
+      - DB_USERNAME=admin
       - DB_PASSWORD=password
       - DB_NAME=moderno
     depends_on:
