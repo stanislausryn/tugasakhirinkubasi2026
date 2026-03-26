@@ -18,11 +18,13 @@ export class ProductsController {
     @Query('limit') limit?: number,
     @Query('sort') sort?: string,
   ) {
+    console.log(`[DEBUG] GET /api/products called (page=${page || 1}, limit=${limit || 12})`);
     return this.productsService.findAll({ category, search, page, limit, sort });
   }
 
   @Get('featured')
   findFeatured() {
+    console.log(`[DEBUG] GET /api/products/featured called`);
     return this.productsService.findFeatured();
   }
 
