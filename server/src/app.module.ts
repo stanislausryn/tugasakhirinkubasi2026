@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ProductsModule } from './products/products.module';
@@ -25,6 +26,10 @@ import { AdminModule } from './admin/admin.module';
         logging: config.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],
+    }),
+    PrometheusModule.register({
+      path: '/metrics',
+      defaultMetrics: { enabled: true },
     }),
     AuthModule,
     UsersModule,

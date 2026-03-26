@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order, OrderStatus } from './order.entity';
 import { CartService } from '../cart/cart.service';
+import { InjectMetric } from '@willsoto/nestjs-prometheus';
+import { Counter } from 'prom-client';
 
 @Injectable()
 export class OrdersService {
@@ -10,6 +12,8 @@ export class OrdersService {
     @InjectRepository(Order)
     private orderRepo: Repository<Order>,
     private cartService: CartService,
+    @InjectMetric('order_created_total')
+    private orderCounter: Counter<string>,
   ) {}
 
   private generateOrderNumber(): string {
@@ -51,6 +55,7 @@ export class OrdersService {
 
     const saved = await this.orderRepo.save(order);
     await this.cartService.clearCart(userId);
+    this.orderCounter.inc();
     return saved;
   }
 
