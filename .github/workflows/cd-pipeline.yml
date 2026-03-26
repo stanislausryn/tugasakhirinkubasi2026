@@ -1,0 +1,109 @@
+name: CD Pipeline MODERNO
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+jobs:
+  build-and-test:
+    name: Build & Test (CI)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+      
+      # Step tambahan untuk validasi kode sebelum deploy (Opsional tapi direkomendasikan)
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      
+      - name: Install & Build Server
+        run: |
+          cd server && npm ci && npm run build
+          
+      - name: Install & Build Client
+        run: |
+          cd client && npm ci && npm run build
+
+  deploy-staging:
+    name: Deploy to Staging (Stage 1)
+    needs: build-and-test
+    if: github.ref == 'refs/heads/dev'
+    # Menggunakan environment khusus 'staging' (Stage 4)
+    environment: 
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # Deployment via SSH (Bisa disesuaikan jika menggunakan Railway/Render via CLI atau Webhook)
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /path/to/moderno
+            git pull origin dev
+            
+            # Stage 2: Database Migration
+            # Database harus menyala duluan
+            docker-compose -f docker-compose.prod.yml up -d db
+            sleep 10
+            
+            # Jalankan spesifik satu container smentara untuk migrasi TypeORM (Wajib lewat sebelum backend menyala)
+            docker-compose -f docker-compose.prod.yml run --rm server sh -c "npx typeorm migration:run -d dist/data-source.js"
+            
+            # Jika migrasi sukses, nyalakan seluruh backend dan frontend
+            docker-compose -f docker-compose.prod.yml up -d --build
+            
+      - name: Health Check Staging
+        run: |
+          sleep 15
+          curl -f ${{ vars.STAGING_URL }} || exit 1
+
+  deploy-production:
+    name: Deploy to Production (Stage 3)
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    # Menggunakan environment khusus 'production'. Pastikan manual approval dicentang di setelan GitHub!
+    environment: 
+      name: production
+      url: ${{ vars.PROD_URL }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH (Rolling Update)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          username: ${{ secrets.PROD_SSH_USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /path/to/moderno
+            git pull origin main
+            
+            # Database Migration Production
+            docker-compose -f docker-compose.prod.yml up -d db
+            sleep 10
+            docker-compose -f docker-compose.prod.yml run --rm server sh -c "npx typeorm migration:run -d dist/data-source.js"
+            
+            # Strategi Deployment: Rolling Update
+            # Recreate service secara individu per image untuk memastikan tidak down secara bersamaan
+            docker-compose -f docker-compose.prod.yml build
+            docker-compose -f docker-compose.prod.yml up -d --no-deps server
+            docker-compose -f docker-compose.prod.yml up -d --no-deps client
+
+      - name: Health Check Production
+        run: |
+          sleep 15
+          curl -f ${{ vars.PROD_URL }} || exit 1
+
