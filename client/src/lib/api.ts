@@ -1,7 +1,19 @@
 import axios from 'axios';
 
+const isServer = typeof window === 'undefined';
+
+const getBaseUrl = () => {
+  if (isServer) {
+    // Docker internal network (Next.js server-side)
+    return process.env.INTERNAL_API_URL || 'http://server:3001/api';
+  }
+  // Browser external network (Client-side)
+  // Fallback to relative URL if completely missing (proxy mode) or localhost
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+  baseURL: getBaseUrl(),
   withCredentials: true,
 });
 
