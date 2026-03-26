@@ -46,6 +46,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            git config --global --add safe.directory $(pwd)/tugasakhirinkubasi2026
             cd tugasakhirinkubasi2026/
             git pull origin development
             
@@ -81,8 +82,8 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            git config --global --add safe.directory $(pwd)/tugasakhirinkubasi2026
             cd tugasakhirinkubasi2026/
-            git config --global --add safe.directory "*"
             git pull origin main
             
             # Database Migration Production
