@@ -2,7 +2,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/src/lib/api';
-import { Product, PaginatedResponse } from '@/src/types';
+import { Product, PaginatedResponse, ProductResponse } from '@/src/types';
 import { ProductCard } from '@/src/components/product/ProductCard';
 import { Search, SlidersHorizontal } from 'lucide-react';
 
@@ -24,9 +24,14 @@ function ProductsContent() {
     if (category !== 'all') params.category = category;
     if (search) params.search = search;
 
-    api.get<PaginatedResponse<Product>>('/products', { params })
-      .then((r) => { setProducts(r.data.items); setTotal(r.data.total); })
-      .catch(() => {})
+    api.get<ProductResponse>('/products', { params })
+      .then((response) => { 
+        console.log('DEBUG [products]:', response.data);
+        const data = response.data;
+        setProducts(data.items); 
+        setTotal(data.total); 
+      })
+      .catch((err) => { console.error('Error fetching products:', err) })
       .finally(() => setLoading(false));
   }, [category, search, sort, page]);
 

@@ -77,3 +77,5 @@ export interface PaginatedResponse<T> {
   limit: number;
   totalPages: number;
 }
+
+export interface ProductResponse extends PaginatedResponse<Product> {}

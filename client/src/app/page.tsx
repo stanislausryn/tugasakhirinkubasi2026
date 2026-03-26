@@ -11,7 +11,13 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/products/featured').then((r) => setFeatured(r.data)).catch(() => {}).finally(() => setLoading(false));
+    api.get('/products/featured')
+      .then((response) => {
+        console.log('DEBUG [featured]:', response.data);
+        setFeatured(response.data);
+      })
+      .catch((err) => { console.error('Error fetching featured products:', err) })
+      .finally(() => setLoading(false));
   }, []);
 
   return (
