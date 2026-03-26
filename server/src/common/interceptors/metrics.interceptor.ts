@@ -7,7 +7,7 @@ import {
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Counter, Histogram } from 'prom-client';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 
 @Injectable()
 export class MetricsInterceptor implements NestInterceptor {
@@ -26,17 +26,10 @@ export class MetricsInterceptor implements NestInterceptor {
     const end = this.histogram.startTimer();
 
     return next.handle().pipe(
-      tap({
-        next: () => {
-          const status = res.statusCode || 200;
-          this.counter.labels(method, route, status.toString()).inc();
-          end({ method, route, status: status.toString() });
-        },
-        error: (error) => {
-          const status = error.status || error.statusCode || 500;
-          this.counter.labels(method, route, status.toString()).inc();
-          end({ method, route, status: status.toString() });
-        },
+      finalize(() => {
+        const status = res.statusCode ? res.statusCode.toString() : '500';
+        this.counter.labels(method, route, status).inc();
+        end({ method, route, status });
       }),
     );
   }
