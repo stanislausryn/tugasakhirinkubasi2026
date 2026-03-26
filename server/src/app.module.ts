@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PrometheusModule, makeCounterProvider, makeHistogramProvider } from '@willsoto/nestjs-prometheus';
-import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
+import { MetricsMiddleware } from './common/middleware/metrics.middleware';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ProductsModule } from './products/products.module';
@@ -40,7 +40,7 @@ import { AdminModule } from './admin/admin.module';
     AdminModule,
   ],
   providers: [
-    MetricsInterceptor,
+    MetricsMiddleware,
     makeCounterProvider({
       name: 'http_requests_total',
       help: 'Total HTTP requests',
@@ -54,4 +54,8 @@ import { AdminModule } from './admin/admin.module';
     }),
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(MetricsMiddleware).forRoutes('*');
+  }
+}
