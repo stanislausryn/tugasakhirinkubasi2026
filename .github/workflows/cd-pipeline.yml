@@ -81,7 +81,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /tugasakhirinkubasi2026/
+            cd tugasakhirinkubasi2026/
             git pull origin main
             
             # Database Migration Production
