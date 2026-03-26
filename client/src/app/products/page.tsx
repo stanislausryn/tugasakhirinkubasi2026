@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/src/lib/api';
 import { Product, PaginatedResponse } from '@/src/types';
@@ -8,7 +8,7 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 
 const CATEGORIES = ['all', 'women', 'men', 'accessories', 'sale'];
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
@@ -123,5 +123,13 @@ export default function ProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="pt-24 pb-16 px-6 max-w-7xl mx-auto text-center text-[#888780] animate-pulse">Loading collection...</div>}>
+      <ProductsContent />
+    </Suspense>
   );
 }
