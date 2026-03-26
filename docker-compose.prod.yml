@@ -22,6 +22,8 @@ services:
         limits:
           cpus: '1.0'
           memory: 512M
+    networks:
+      - proxy_net
 
   server:
     build:
@@ -49,6 +51,8 @@ services:
         limits:
           cpus: '1.0'
           memory: 512M
+    networks:
+      - proxy_net
 
   client:
     build:
@@ -69,6 +73,13 @@ services:
         limits:
           cpus: '1.0'
           memory: 512M
+    networks:
+      - proxy_net
 
 volumes:
   pgdata_prod:
+
+networks:
+  proxy_net:
+    external: true
+
