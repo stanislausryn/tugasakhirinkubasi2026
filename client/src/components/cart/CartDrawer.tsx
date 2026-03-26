@@ -38,7 +38,7 @@ export function CartDrawer() {
               <p className="text-sm text-[#888780]">Sign in to view your cart</p>
               <Link href="/auth/login" onClick={toggleCart} className="text-sm font-medium underline underline-offset-4">Sign in</Link>
             </div>
-          ) : !cart?.items.length ? (
+          ) : !cart || cart.items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
               <ShoppingBag size={40} className="text-[#D3D1C7]" />
               <p className="text-sm text-[#888780]">Your cart is empty</p>
@@ -75,7 +75,7 @@ export function CartDrawer() {
         </div>
 
         {/* Footer */}
-        {cart?.items.length > 0 && (
+        {cart && cart.items.length > 0 && (
           <div className="px-6 py-5 border-t border-[#E8E6DF] space-y-4">
             <div className="flex justify-between text-sm">
               <span className="text-[#888780]">Subtotal</span>
