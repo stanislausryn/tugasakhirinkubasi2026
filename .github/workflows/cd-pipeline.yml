@@ -3,8 +3,8 @@ name: CD Pipeline MODERNO
 on:
   push:
     branches:
-      - main
       - development
+      - main
 
 jobs:
   build-and-test:
@@ -27,10 +27,45 @@ jobs:
         run: |
           cd client && npm ci && npm run build
 
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build-and-test
+    if: github.ref == 'refs/heads/development'
+    environment: 
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH (Staging)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /tugasakhirinkubasi2026/
+            git pull origin development
+            
+            # Database Migration
+            docker-compose -f docker-compose.prod.yml up -d db
+            sleep 10
+            docker-compose -f docker-compose.prod.yml run --rm server sh -c "npx typeorm migration:run -d dist/data-source.js"
+            
+            # Deploy Staging
+            docker-compose -f docker-compose.prod.yml up -d --build
+
+      - name: Health Check Staging
+        run: |
+          sleep 15
+          curl -f ${{ vars.STAGING_URL }} || exit 1
+
   deploy-production:
     name: Deploy to Production
     needs: build-and-test
-    if: github.ref == 'refs/heads/development'
+    if: github.ref == 'refs/heads/main'
     environment: 
       name: production
       url: ${{ vars.PROD_URL }}
@@ -46,14 +81,15 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-
             cd /tugasakhirinkubasi2026/
             git pull origin main
             
+            # Database Migration Production
             docker-compose -f docker-compose.prod.yml up -d db
             sleep 10
             docker-compose -f docker-compose.prod.yml run --rm server sh -c "npx typeorm migration:run -d dist/data-source.js"
             
+            # Strategi Deployment: Rolling Update
             docker-compose -f docker-compose.prod.yml build
             docker-compose -f docker-compose.prod.yml up -d --no-deps server
             docker-compose -f docker-compose.prod.yml up -d --no-deps client
