@@ -3,7 +3,6 @@ name: CD Pipeline MODERNO
 on:
   push:
     branches:
-      - development
       - main
 
 jobs:
@@ -27,44 +26,6 @@ jobs:
         run: |
           cd client && npm ci && npm run build
 
-  deploy-staging:
-    name: Deploy to Staging
-    needs: build-and-test
-    if: github.ref == 'refs/heads/development'
-    environment: 
-      name: staging
-      url: ${{ vars.STAGING_URL }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd /path/to/moderno
-            git pull origin dev
-            
-            # Stage 2: Database Migration
-            # Database harus menyala duluan
-            docker-compose -f docker-compose.prod.yml up -d db
-            sleep 10
-            
-            # Jalankan spesifik satu container smentara untuk migrasi TypeORM (Wajib lewat sebelum backend menyala)
-            docker-compose -f docker-compose.prod.yml run --rm server sh -c "npx typeorm migration:run -d dist/data-source.js"
-            
-            # Jika migrasi sukses, nyalakan seluruh backend dan frontend
-            docker-compose -f docker-compose.prod.yml up -d --build
-            
-      - name: Health Check Staging
-        run: |
-          sleep 15
-          curl -f ${{ vars.STAGING_URL }} || exit 1
-
   deploy-production:
     name: Deploy to Production
     needs: build-and-test
@@ -84,16 +45,14 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /path/to/moderno
+
+            cd /tugasakhirinkubasi2026/
             git pull origin main
             
-            # Database Migration Production
             docker-compose -f docker-compose.prod.yml up -d db
             sleep 10
             docker-compose -f docker-compose.prod.yml run --rm server sh -c "npx typeorm migration:run -d dist/data-source.js"
             
-            # Strategi Deployment: Rolling Update
-            # Recreate service secara individu per image untuk memastikan tidak down secara bersamaan
             docker-compose -f docker-compose.prod.yml build
             docker-compose -f docker-compose.prod.yml up -d --no-deps server
             docker-compose -f docker-compose.prod.yml up -d --no-deps client
@@ -102,4 +61,3 @@ jobs:
         run: |
           sleep 15
           curl -f ${{ vars.PROD_URL }} || exit 1
-
