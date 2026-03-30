@@ -53,6 +53,9 @@ jobs:
             # Deploy Staging
             docker-compose -f docker-compose.prod.yml up -d --build
             
+            # Run Migrations
+            docker-compose -f docker-compose.prod.yml exec -T server npm run migration:run:prod
+            
             # Health Check dari VPS
             sleep 15
             curl -f http://localhost:3000 || exit 1
@@ -84,6 +87,10 @@ jobs:
             # Deployment: Rolling Update
             docker-compose -f docker-compose.prod.yml build
             docker-compose -f docker-compose.prod.yml up -d --no-deps server
+            
+            # Run Migrations
+            docker-compose -f docker-compose.prod.yml exec -T server npm run migration:run:prod
+            
             docker-compose -f docker-compose.prod.yml up -d --no-deps client
             
             # Health Check dari VPS

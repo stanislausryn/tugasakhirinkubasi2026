@@ -1,4 +1,4 @@
-# Stage 1: Dependencies and Build
+#Dependencies dan Build
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -6,7 +6,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Stage 2: Production image
+#Image
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
